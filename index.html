@@ -172,6 +172,26 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 .note .vrow a.off{display:none}
 .cal .d.hasnote::after{content:"";position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--cool)}
 .cal .d{position:relative}
+.photos{width:100%;display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.prow{display:flex;align-items:center;gap:8px}
+.prow .pl{font-size:12px;font-weight:700;color:var(--mute);width:44px;flex:none}
+.prow .th{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1}
+.prow .th::-webkit-scrollbar{display:none}
+.prow .th img,.prow .th .add{width:56px;height:56px;border-radius:12px;object-fit:cover;flex:none;background:var(--panel2)}
+.prow .th .add{display:grid;place-items:center;font-size:22px;color:var(--mute);border:2px dashed var(--line)}
+.prow .th .miss{width:56px;height:56px;border-radius:12px;background:var(--panel2);display:grid;place-items:center;font-size:10px;color:var(--mute);text-align:center;flex:none}
+.gal{background:var(--panel);border-radius:20px;box-shadow:var(--shadow);padding:14px;margin-bottom:8px}
+.gal .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.gal .grid button{aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--panel2);position:relative}
+.gal .grid img{width:100%;height:100%;object-fit:cover;display:block}
+.gal .grid span{position:absolute;left:0;right:0;bottom:0;font-size:10px;font-weight:700;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:10px 4px 3px}
+.gal .empty{color:var(--mute);font-size:13px;text-align:center;padding:10px 0}
+.viewer{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:50;display:none;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.viewer.open{display:flex}
+.viewer img{flex:1;min-height:0;object-fit:contain;width:100%}
+.viewer .vb{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;color:#fff;font-size:14px}
+.viewer .vb button{padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.12);color:#fff;font-weight:600}
+.viewer .vb button.del{background:var(--danger)}
 .cloud{background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:12px 16px;margin-top:8px;font-size:13px}
 .cloud .st{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .cloud .st b{font-weight:600}
@@ -237,6 +257,8 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
     <div class="grid" id="calGrid"></div>
     <div class="legend"><i class="a"></i>낮음 <i class="b"></i>중간 <i></i>전부 <i class="r"></i>쉼</div>
   </section>
+  <h2>이달 도장 사진</h2>
+  <section class="gal"><div class="grid" id="galGrid"></div><div class="empty" id="galEmpty">체육관을 선택하면 사진을 올릴 수 있어요.</div></section>
   <h2>항목별 연속 · 이달 실천율</h2>
   <section class="streaks" id="streaks"></section>
   <section class="chart">
@@ -258,6 +280,8 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
   <p class="foot">기록은 이 기기와(연결 시) 구글 시트에 저장됩니다.<br><button id="theme">밝은 화면으로</button><button id="reset">전체 기록 지우기</button></p>
 </div>
 <div class="toast" id="toast"></div>
+<input type="file" id="pfile" accept="image/*" multiple style="display:none">
+<div class="viewer" id="viewer"><div class="vb"><span id="vtitle"></span><div><button id="vdel" class="del">삭제</button> <button id="vclose">닫기</button></div></div><img id="vimg" alt=""></div>
 
 <script>
 const ITEMS=[
@@ -330,6 +354,42 @@ function streakOf(pred){let s=0;const d=today();for(let i=0;i<1000;i++){const r=
 function set(k,v){const key=dk(cur);data[key]={...rec(key),[k]:v,u:Date.now()};save();renderDay();renderMonth();cloudPush([key])}
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
 
+/* ---------- photos (IndexedDB, 이 기기 저장) ---------- */
+const urlCache={};
+function pdb(){return new Promise((res,rej)=>{const q=indexedDB.open('workout-photos',1);q.onupgradeneeded=()=>q.result.createObjectStore('p',{keyPath:'id'});q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+async function pput(o){const d=await pdb();return new Promise((res,rej)=>{const t=d.transaction('p','readwrite');t.objectStore('p').put(o);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+async function pget(id){const d=await pdb();return new Promise((res,rej)=>{const q=d.transaction('p').objectStore('p').get(id);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+async function pdel(id){const d=await pdb();return new Promise((res,rej)=>{const t=d.transaction('p','readwrite');t.objectStore('p').delete(id);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+async function purl(id){if(urlCache[id])return urlCache[id];try{const o=await pget(id);if(!o)return null;urlCache[id]=URL.createObjectURL(o.blob);return urlCache[id]}catch(e){return null}}
+function compress(file){return new Promise(res=>{const img=new Image();img.onload=()=>{const M=1200,s=Math.min(1,M/Math.max(img.width,img.height));const c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);c.toBlob(b=>res(b),'image/jpeg',.8)};img.onerror=()=>res(file);img.src=URL.createObjectURL(file)})}
+let pendPlace=null;
+document.getElementById('pfile').onchange=async e=>{
+  const files=[...e.target.files];e.target.value='';if(!files.length||!pendPlace)return;
+  const key=dk(cur),r=rec(key),ph={...(r.photos||{})};ph[pendPlace]=[...(ph[pendPlace]||[])];
+  for(const f of files){const id='p'+Date.now()+Math.random().toString(36).slice(2,7);const blob=await compress(f);await pput({id,blob,date:key,place:pendPlace});ph[pendPlace].push(id)}
+  set('photos',ph);toast(`${files.length}장 저장했어요`);
+};
+async function openViewer(id,date,place){
+  const u=await purl(id);if(!u){toast('이 기기에 없는 사진이에요');return}
+  const v=document.getElementById('viewer');v.classList.add('open');document.getElementById('vimg').src=u;document.getElementById('vtitle').textContent=`${date.slice(5).replace('-','/')} · ${place}`;
+  document.getElementById('vdel').onclick=async()=>{if(!confirm('이 사진을 지울까요?'))return;await pdel(id);delete urlCache[id];const r=rec(date),ph={...(r.photos||{})};ph[place]=(ph[place]||[]).filter(x=>x!==id);data[date]={...r,photos:ph,u:Date.now()};save();v.classList.remove('open');renderDay();renderMonth();cloudPush([date])};
+}
+document.getElementById('vclose').onclick=()=>document.getElementById('viewer').classList.remove('open');
+async function renderPhotoRows(el,r,ps){
+  const wrap=document.createElement('div');wrap.className='photos';
+  for(const p of ps){
+    const row=document.createElement('div');row.className='prow';row.innerHTML=`<div class="pl">${p}</div><div class="th"></div>`;const th=row.querySelector('.th');
+    const add=document.createElement('button');add.className='add';add.textContent='+';add.setAttribute('aria-label',p+' 사진 추가');add.onclick=()=>{pendPlace=p;document.getElementById('pfile').click()};th.appendChild(add);
+    for(const id of ((r.photos||{})[p]||[])){const u=await purl(id);let t;if(u){t=document.createElement('img');t.src=u;t.alt=p}else{t=document.createElement('div');t.className='miss';t.textContent='다른 기기 사진'}t.onclick=()=>openViewer(id,dk(cur),p);th.appendChild(t)}
+    wrap.appendChild(row);
+  }
+  el.appendChild(wrap);
+}
+async function renderGallery(recs){
+  const g=document.getElementById('galGrid'),em=document.getElementById('galEmpty');g.innerHTML='';let n=0;
+  for(const x of recs){const ph=x.r.photos||{};for(const p in ph)for(const id of ph[p]){n++;const b=document.createElement('button');const u=await purl(id);b.innerHTML=(u?`<img src="${u}" alt="${p}">`:'')+`<span>${x.d}일 ${p}</span>`;b.onclick=()=>openViewer(id,x.key,p);g.appendChild(b)}}
+  em.style.display=n?'none':'';
+}
 /* ---------- day ---------- */
 function renderDay(){
   const key=dk(cur),r=rec(key),t=today(),isT=key===dk(t);
@@ -379,7 +439,7 @@ function renderDay(){
         c.onclick=()=>{const next=ps.includes(p)?ps.filter(x=>x!==p):[...ps,p];data[key]={...rec(key),gymPlaces:next,gymTimes:times,gym:next.length>0,u:Date.now()};save();renderDay();renderMonth();cloudPush([key])};chips.appendChild(c)});
       const seg=document.createElement('div');seg.className='seg';
       [1,2].forEach(k=>{const b=document.createElement('button');b.textContent=k+'회';b.className=times===k?'on':'';b.disabled=!ps.length;b.onclick=()=>set('gymTimes',k);seg.appendChild(b)});
-      row.appendChild(chips);row.appendChild(seg);el.appendChild(row);
+      row.appendChild(chips);row.appendChild(seg);el.appendChild(row);if(ps.length)renderPhotoRows(el,r,ps);
     }else if(it.t==='bool'){
       const b=document.createElement('button');b.className='toggle'+(v?' on':'');b.setAttribute('role','switch');b.setAttribute('aria-checked',!!v);b.setAttribute('aria-label',it.n);
       b.onclick=()=>set(it.k,!v);el.appendChild(b);
@@ -402,7 +462,7 @@ function monthRecs(y,m){const days=new Date(y,m+1,0).getDate(),a=[];for(let d=1;
 function renderMonth(){
   const y=mon.getFullYear(),m=mon.getMonth(),first=new Date(y,m,1).getDay(),t=today(),tKey=dk(t);
   const recs=monthRecs(y,m),days=recs.length;
-  document.getElementById('monthTitle').textContent=`${y}년 ${m+1}월`;
+  document.getElementById('monthTitle').textContent=`${y}년 ${m+1}월`;renderGallery(recs);
   const isCurM=y===t.getFullYear()&&m===t.getMonth();
   document.getElementById('nextM').disabled=isCurM;
   const gym=recs.reduce((a,x)=>a+gymTimes(x.r),0),full=recs.filter(x=>doneCount(x.r)===ITEMS.length).length;
@@ -451,7 +511,7 @@ document.getElementById('prevM').onclick=()=>{mon=new Date(mon.getFullYear(),mon
 document.getElementById('nextM').onclick=()=>{mon=new Date(mon.getFullYear(),mon.getMonth()+1,1);renderMonth()};
 document.getElementById('theme').onclick=function(){const h=document.documentElement;const light=h.dataset.theme==='light';if(light)delete h.dataset.theme;else h.dataset.theme='light';this.textContent=light?'밝은 화면으로':'어두운 화면으로';try{localStorage.setItem(TKEY,light?'dark':'light')}catch(e){}};
 if(document.documentElement.dataset.theme==='light')document.getElementById('theme').textContent='어두운 화면으로';
-document.getElementById('reset').onclick=()=>{if(confirm('이 기기의 기록만 지웁니다. 클라우드 기록은 남아요. 지울까요?')){data={};save();renderDay();renderMonth()}};
+document.getElementById('reset').onclick=()=>{if(confirm('이 기기의 기록과 사진을 지웁니다. 클라우드 기록은 남아요. 지울까요?')){data={};save();indexedDB.deleteDatabase('workout-photos');renderDay();renderMonth()}};
 
 /* ---------- cloud sync (Google Apps Script + Sheet) ---------- */
 const CKEY='workout-cloud';
