@@ -266,12 +266,14 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
     <div class="msg" id="wkMsg"></div>
     <div class="hist" id="wkHist"></div>
     <div class="avg"><span>최근 4주 평균 <b id="wkAvg4">0</b>회</span><span>이달 주평균 <b id="wkAvgM">0</b>회</span></div>
+    <div class="avg"><span>이번 주 스트랭스 <b id="wkStr">0</b>분</span><span>이번 주 복습 <b id="wkRev">0</b>분</span></div>
   </section>
   <div class="rest"><div>쉬는 날<span>회복도 훈련이에요. 연속 기록이 끊기지 않아요.</span></div><button class="toggle" id="restToggle" role="switch" aria-label="쉬는 날"></button></div>
 
   <h2>도장</h2><div class="group" id="g-dojo"></div>
-  <h2>근력</h2><div class="group" id="g-str"></div>
+  <h2>스트랭스</h2><div class="group" id="g-str"></div>
   <h2>가동성 · 컨디션</h2><div class="group" id="g-mob"></div>
+  <h2>복습 · 레슨비 회수</h2><div class="group" id="g-rev"></div>
 
   <h2>기록 · 영상</h2>
   <section class="note">
@@ -286,7 +288,7 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
   <section class="cal">
     <div class="wk"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
     <div class="grid" id="calGrid"></div>
-    <div class="legend"><i></i>달성(도장+훈련) <i class="g"></i>도장만 <i class="t"></i>훈련 30분만 <i class="r"></i>쉼</div>
+    <div class="legend"><i></i>달성(도장+스트랭스) <i class="g"></i>도장만 <i class="t"></i>스트랭스만 <i class="r"></i>쉼</div>
   </section>
   <h2>이달 도장 사진</h2>
   <section class="gal"><div class="grid" id="galGrid"></div><div class="empty" id="galEmpty">체육관을 선택하면 사진을 올릴 수 있어요.</div></section>
@@ -319,18 +321,21 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 const ITEMS=[
   {k:'gym',   g:'dojo', n:'체육관',            s:'어디에 몇 회 갔나요?', t:'gym'},
   {k:'hajun', g:'dojo', n:'하준과 스파링',      s:'했나요?', t:'bool'},
-  {k:'mins',  g:'str',  n:'웨이트 훈련 시간',   s:'분 · 30분 이상이면 달성', t:'num', step:10},
+  {k:'mins',  g:'str',  n:'스트랭스',           s:'분 · 30분 이상이면 달성', t:'num', step:10},
   {k:'bbs',   g:'str',  n:'불가리안 백 스윙',  s:'개수', t:'num', step:10},
   {k:'bbrow', g:'str',  n:'불가리안 백 로우',  s:'개수', t:'num', step:10},
   {k:'bblunge',g:'str', n:'불가리안 백 런지',  s:'개수', t:'num', step:10},
   {k:'kbs',   g:'str',  n:'케틀벨 스윙',       s:'개수', t:'num', step:10},
   {k:'kbsn',  g:'str',  n:'케틀벨 스내치',     s:'개수', t:'num', step:5},
-  {k:'squat', g:'str',  n:'스쿼트',            s:'개수', t:'num', step:10},
+  {k:'squat', g:'str',  n:'불가리안 백 스쿼트', s:'개수', t:'num', step:10},
   {k:'pull',  g:'str',  n:'턱걸이',            s:'개수', t:'num', step:1},
   {k:'bench', g:'str',  n:'벤치프레스',         s:'개수', t:'num', step:5},
   {k:'thor',  g:'mob',  n:'흉추 회전 스트레칭', s:'회수', t:'num', step:5},
   {k:'bridge',g:'mob',  n:'브릿지',            s:'개수', t:'num', step:5},
   {k:'crawl', g:'mob',  n:'배밀기',            s:'개수', t:'num', step:5},
+  {k:'rvSpar',g:'rev',  n:'스파링 복습',        s:'분', t:'num', step:10},
+  {k:'rvTech',g:'rev',  n:'기술 복습 (개인레슨 영상)', s:'분', t:'num', step:10},
+  {k:'rvMem', g:'rev',  n:'멤버십 복습',        s:'분', t:'num', step:10},
 ];
 const PLACES=['유도','레슬링','주짓수'];
 const QUOTES=[
@@ -387,7 +392,8 @@ const itemVal=(it,r)=>it.t==='gym'?gymTimes(r):it.t==='bool'?(r[it.k]?1:0):(r[it
 const doneCount=r=>ITEMS.filter(i=>itemVal(i,r)>0).length;
 const MIN_GOAL=30;
 const trained=r=>(r.mins||0)>=MIN_GOAL;
-const anyDrill=r=>ITEMS.some(i=>i.g!=='dojo'&&itemVal(i,r)>0);
+const anyDrill=r=>ITEMS.some(i=>(i.g==='str'||i.g==='mob')&&itemVal(i,r)>0);
+const reviewMins=r=>ITEMS.filter(i=>i.g==='rev').reduce((a,i)=>a+(r[i.k]||0),0);
 const dojo=r=>gymTimes(r)>0||!!r.hajun;
 const dayLevel=r=>{const g=dojo(r),t=trained(r);return g&&t?'l3':g?'lg':t?'lt':''};
 const achieved=r=>dojo(r)&&trained(r);
@@ -450,10 +456,10 @@ function renderDay(){
   const fg=document.getElementById('ringFg');fg.style.strokeDasharray=C;fg.style.strokeDashoffset=C*(1-n/ITEMS.length);
   document.getElementById('ringNum').textContent=`${n}/${ITEMS.length}`;
   const light=document.getElementById('light');
-  const mn=r.mins||0;const st=r.rest&&!partial(r)?['','쉬는 날']:!partial(r)?['r','시작 전']:achieved(r)?['g','달성 · 도장+훈련 '+mn+'분']:dojo(r)?['y',`절반 · 훈련 ${mn}/${MIN_GOAL}분`]:trained(r)?['y','절반 · 도장 남음']:['y',`훈련 ${mn}/${MIN_GOAL}분`];
+  const mn=r.mins||0;const st=r.rest&&!partial(r)?['','쉬는 날']:!partial(r)?['r','시작 전']:achieved(r)?['g','달성 · 도장+스트랭스 '+mn+'분']:dojo(r)?['y',`절반 · 스트랭스 ${mn}/${MIN_GOAL}분`]:trained(r)?['y','절반 · 도장 남음']:['y',`스트랭스 ${mn}/${MIN_GOAL}분`];
   light.className='light '+st[0];light.querySelector('span').textContent=st[1];
   const msgs=['오늘 운동을 시작해 볼까요','좋아요, 몸이 풀리고 있어요','절반 넘었어요, 계속!','거의 다 왔어요','오늘 전부 해냈어요 🔥'];
-  document.getElementById('heroMsg').textContent=r.rest&&!partial(r)?'오늘은 회복. 내일 다시 갑니다.':!partial(r)?`오늘 목표: 도장 + 웨이트 ${MIN_GOAL}분`:achieved(r)?'도장도 가고 훈련도 했어요 🔥':dojo(r)?(mn>0?`도장은 갔고, ${MIN_GOAL-mn}분만 더하면 달성`:`도장은 갔고, 웨이트 ${MIN_GOAL}분 채우면 달성`):trained(r)?'훈련은 했고, 도장만 다녀오면 달성':`웨이트 ${mn}분 기록 중 · ${MIN_GOAL}분 채우고 도장까지`;
+  document.getElementById('heroMsg').textContent=r.rest&&!partial(r)?'오늘은 회복. 내일 다시 갑니다.':!partial(r)?`오늘 목표: 도장 + 스트랭스 ${MIN_GOAL}분`:achieved(r)?'도장도 가고 훈련도 했어요 🔥':dojo(r)?(mn>0?`도장은 갔고, ${MIN_GOAL-mn}분만 더하면 달성`:`도장은 갔고, 스트랭스 ${MIN_GOAL}분 채우면 달성`):trained(r)?'훈련은 했고, 도장만 다녀오면 달성':`스트랭스 ${mn}분 기록 중 · ${MIN_GOAL}분 채우고 도장까지`;
   const sAll=streakOf(x=>achieved(x)),sGym=streakOf(x=>gymTimes(x)>0);
   document.getElementById('streakLine').innerHTML=`연속 운동 <b>${sAll}일</b> · 도장 연속 <b>${sGym}일</b>`;
   const rt=document.getElementById('restToggle');rt.className='toggle'+(r.rest?' on':'');rt.setAttribute('aria-checked',!!r.rest);rt.onclick=()=>set('rest',!r.rest);
@@ -473,7 +479,7 @@ function renderDay(){
     card.innerHTML=(isYt?`<img class="thumb" src="https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg" alt="">`:`<div class="ph${isYt?' yt':''}">${isGp?'🖼️':'🎬'}</div>`)+`<div class="t"><b>${label} ${isYt?'· 유튜브':isGp?'· 구글 포토':''}</b><span>${url.replace(/^https?:\/\//,'')}</span></div>`;
   });
   // items
-  ['dojo','str','mob'].forEach(g=>document.getElementById('g-'+g).innerHTML='');
+  ['dojo','str','mob','rev'].forEach(g=>document.getElementById('g-'+g).innerHTML='');
   ITEMS.forEach(it=>{
     const v=r[it.k];const done=itemVal(it,r)>0;const sk=streakOf(x=>itemVal(it,x)>0);
     const el=document.createElement('div');el.className='item'+(done?' done':'')+(it.t==='gym'?' gym':'');
@@ -516,6 +522,8 @@ function renderWeekly(){
   document.getElementById('wkRange').textContent=`이번 주 · ${ws.getMonth()+1}/${ws.getDate()}–${we.getMonth()+1}/${we.getDate()}`;
   const bar=document.getElementById('wkBar');bar.style.width=Math.min(100,n/GOAL*100)+'%';bar.className=n>=GOAL?'hit':'';
   document.getElementById('wkMsg').innerHTML=n>=GOAL?`목표 달성 🔥 <b>${n}회</b>`:`목표까지 <b>${GOAL-n}회</b> · 남은 날 <b>${left+1}일</b>${left+1>0?` · 하루 ${Math.ceil((GOAL-n)/(left+1))}회 페이스`:''}`;
+  let sm=0,rv=0;for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);const r=rec(dk(d));sm+=r.mins||0;rv+=reviewMins(r)}
+  document.getElementById('wkStr').textContent=sm;document.getElementById('wkRev').textContent=rv;
   const hist=document.getElementById('wkHist');hist.innerHTML='';const counts=[];
   for(let i=7;i>=0;i--){const s=new Date(ws);s.setDate(ws.getDate()-i*7);const c=weekCount(s);counts.push(c);
     hist.innerHTML+=`<div><i class="${c?'on':''}${c>=GOAL?' hit':''}${i===0?' now':''}" style="height:${Math.max(4,c/Math.max(GOAL,...counts,1)*100)}%"></i><span>${s.getMonth()+1}/${s.getDate()}</span></div>`}
@@ -549,7 +557,7 @@ function renderMonth(){
   const tabs=document.getElementById('tabs');tabs.innerHTML='';
   ITEMS.forEach(it=>{const b=document.createElement('button');b.textContent=it.n;b.className=it.k===tab?'on':'';b.onclick=()=>{tab=it.k;renderMonth()};tabs.appendChild(b)});
   const it=ITEMS.find(i=>i.k===tab),vals=recs.map(x=>itemVal(it,x.r)),total=vals.reduce((a,b)=>a+b,0);
-  document.getElementById('chartTotal').textContent=it.t==='bool'?`${total}일`:it.t==='gym'?`${total}회`:it.k==='mins'?`${total}분`:total.toLocaleString();
+  document.getElementById('chartTotal').textContent=it.t==='bool'?`${total}일`:it.t==='gym'?`${total}회`:(it.k==='mins'||it.g==='rev')?`${total}분`:total.toLocaleString();
   document.getElementById('chartLabel').textContent=it.t==='bool'?`${m+1}월에 ${it.n} 한 날`:it.t==='gym'?`${m+1}월 도장 출석 (하루 1~2회)`:`${m+1}월 ${it.n} 합계 · 하루 최고 ${Math.max(0,...vals)}`;
   const W=340,H=150,L=8,R=8,T=14,B=18,cw=W-L-R,ch=H-T-B,max=Math.max(1,...vals),bw=cw/days;
   let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${it.n} 일별 그래프">`;
@@ -564,7 +572,7 @@ function renderMonth(){
 document.getElementById('share').onclick=async()=>{
   const y=mon.getFullYear(),m=mon.getMonth(),recs=monthRecs(y,m),tKey=dk(today());
   const line=it=>{const v=recs.reduce((a,x)=>a+itemVal(it,x.r),0);return `${it.n} ${it.t==='gym'?v+'회':it.t==='bool'?v+'일':v+'개'}`};
-  const txt=`🔥 ${y}년 ${m+1}월 운동 기록\n달성(도장+웨이트30분) ${recs.filter(x=>x.key<=tKey&&achieved(x.r)).length}일 · 도장 ${recs.filter(x=>dojo(x.r)).length}일 · 웨이트 총 ${recs.reduce((a,x)=>a+(x.r.mins||0),0)}분\n${ITEMS.map(line).join('\n')}`;
+  const txt=`🔥 ${y}년 ${m+1}월 운동 기록\n달성(도장+스트랭스30분) ${recs.filter(x=>x.key<=tKey&&achieved(x.r)).length}일 · 도장 ${recs.filter(x=>dojo(x.r)).length}일 · 스트랭스 총 ${recs.reduce((a,x)=>a+(x.r.mins||0),0)}분 · 복습 총 ${recs.reduce((a,x)=>a+reviewMins(x.r),0)}분\n${ITEMS.map(line).join('\n')}`;
   try{if(navigator.share){await navigator.share({text:txt})}else{await navigator.clipboard.writeText(txt);toast('요약을 복사했어요')}}catch(e){}
 };
 
