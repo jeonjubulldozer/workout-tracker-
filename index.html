@@ -163,6 +163,28 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 .chart .gl{stroke:var(--line);stroke-width:1}
 .chart text{fill:var(--mute);font-size:9px;font-family:inherit}
 .share{width:100%;padding:15px;border-radius:16px;background:var(--ink);color:var(--bg);font-weight:700;font-size:15px;margin-top:4px}
+.note{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.note label{font-size:12px;color:var(--mute);font-weight:600}
+.note textarea,.note input{font:inherit;font-size:15px;line-height:1.5;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);width:100%;resize:vertical}
+.note textarea{min-height:88px}
+.note .vrow{display:flex;gap:8px;align-items:center}
+.note .vrow a{flex:none;padding:12px 14px;border-radius:12px;background:var(--hot);color:#fff;font-weight:700;font-size:14px;text-decoration:none;white-space:nowrap}
+.note .vrow a.off{display:none}
+.cal .d.hasnote::after{content:"";position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--cool)}
+.cal .d{position:relative}
+.cloud{background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:12px 16px;margin-top:8px;font-size:13px}
+.cloud .st{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cloud .st b{font-weight:600}
+.cloud .st i{width:8px;height:8px;border-radius:50%;background:var(--mute);display:inline-block;margin-right:6px}
+.cloud .st i.ok{background:var(--cool)} .cloud .st i.bad{background:var(--danger)} .cloud .st i.busy{background:var(--hot2)}
+.cloud .st button{font-size:12px;color:var(--mute);text-decoration:underline}
+.cloud form{display:none;flex-direction:column;gap:8px;margin-top:10px}
+.cloud form.open{display:flex}
+.cloud input{font:inherit;font-size:13px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
+.cloud .btns{display:flex;gap:8px}
+.cloud .btns button{flex:1;padding:10px;border-radius:10px;background:var(--ink);color:var(--bg);font-weight:600}
+.cloud .btns button.sec{background:var(--panel2);color:var(--ink)}
+.cloud p{color:var(--mute);font-size:12px;line-height:1.5}
 .foot{color:var(--mute);font-size:12px;text-align:center;margin-top:22px;line-height:1.8}
 .foot button{color:var(--mute);text-decoration:underline;margin:0 4px}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
@@ -201,6 +223,12 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
   <h2>근력</h2><div class="group" id="g-str"></div>
   <h2>가동성 · 컨디션</h2><div class="group" id="g-mob"></div>
 
+  <h2>기록 · 영상</h2>
+  <section class="note">
+    <div><label for="skill">오늘 배운 기술 · 메모</label><textarea id="skill" placeholder="예) 오소토가리 들어갈 때 상체 먼저 무너뜨리기. 가드패스 니컷 복습."></textarea></div>
+    <div><label for="video">스파링 영상 링크 (구글 포토 공유 링크 붙여넣기)</label><div class="vrow"><input id="video" inputmode="url" placeholder="https://photos.app.goo.gl/..."><a id="vopen" class="off" target="_blank" rel="noopener">영상 보기</a></div></div>
+  </section>
+
   <div class="mhead"><h3 id="monthTitle"></h3><div class="nav"><button id="prevM" aria-label="지난달">‹</button> <button id="nextM" aria-label="다음달">›</button></div></div>
   <div class="stats" id="stats"></div>
   <div class="stats places" id="places"></div>
@@ -218,7 +246,16 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
   </section>
   <button class="share" id="share">이달 요약 공유하기</button>
 
-  <p class="foot">기록은 이 기기 브라우저에 저장됩니다.<br><button id="theme">밝은 화면으로</button><button id="reset">전체 기록 지우기</button></p>
+  <section class="cloud">
+    <div class="st"><b><i id="cdot"></i><span id="ctext">클라우드 미연결</span></b><button id="cedit">설정</button></div>
+    <form id="cform" onsubmit="return false">
+      <input id="curl" placeholder="Apps Script 웹 앱 URL (https://script.google.com/...)" inputmode="url" autocomplete="off">
+      <input id="ckey" placeholder="비밀번호 (스크립트 KEY와 동일)" autocomplete="off">
+      <div class="btns"><button id="csave">연결하고 동기화</button><button class="sec" id="coff">연결 해제</button></div>
+      <p>연결하면 기록이 구글 시트에 자동 저장되고, 브라우저 기록을 지우거나 폰을 바꿔도 같은 URL·비밀번호로 다시 불러옵니다.</p>
+    </form>
+  </section>
+  <p class="foot">기록은 이 기기와(연결 시) 구글 시트에 저장됩니다.<br><button id="theme">밝은 화면으로</button><button id="reset">전체 기록 지우기</button></p>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -227,6 +264,7 @@ const ITEMS=[
   {k:'gym',   g:'dojo', n:'체육관',            s:'어디에 몇 회 갔나요?', t:'gym'},
   {k:'bbs',   g:'str',  n:'불가리안 백 스윙',  s:'개수', t:'num', step:10},
   {k:'bbrow', g:'str',  n:'불가리안 백 로우',  s:'개수', t:'num', step:10},
+  {k:'bblunge',g:'str', n:'불가리안 백 런지',  s:'개수', t:'num', step:10},
   {k:'kbs',   g:'str',  n:'케틀벨 스윙',       s:'개수', t:'num', step:10},
   {k:'squat', g:'str',  n:'스쿼트',            s:'개수', t:'num', step:10},
   {k:'pull',  g:'str',  n:'턱걸이',            s:'개수', t:'num', step:1},
@@ -289,7 +327,7 @@ const itemVal=(it,r)=>it.t==='gym'?gymTimes(r):it.t==='bool'?(r[it.k]?1:0):(r[it
 const doneCount=r=>ITEMS.filter(i=>itemVal(i,r)>0).length;
 const level=n=>n===0?'':n<3?'l1':n<ITEMS.length?'l2':'l3';
 function streakOf(pred){let s=0;const d=today();for(let i=0;i<1000;i++){const r=rec(dk(d));if(pred(r))s++;else if(!r.rest)break;d.setDate(d.getDate()-1)}return s}
-function set(k,v){const key=dk(cur);data[key]={...rec(key),[k]:v};save();renderDay();renderMonth()}
+function set(k,v){const key=dk(cur);data[key]={...rec(key),[k]:v,u:Date.now()};save();renderDay();renderMonth();cloudPush([key])}
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
 
 /* ---------- day ---------- */
@@ -323,6 +361,10 @@ function renderDay(){
     const el=document.createElement('button');el.className='d'+(i===0?' today':'');
     el.innerHTML=`<span>${['일','월','화','수','목','금','토'][d.getDay()]}</span><i class="${level(nn)}${nn===0&&rr.rest?' rest':''}${dk(d)===key?' cur':''}" data-n="${nn||''}"></i>`;
     el.onclick=()=>{cur=d;mon=new Date(d.getFullYear(),d.getMonth(),1);renderDay();renderMonth()};w.appendChild(el)}
+  // note & video
+  const sk=document.getElementById('skill'),vd=document.getElementById('video'),vo=document.getElementById('vopen');
+  if(document.activeElement!==sk)sk.value=r.note||'';if(document.activeElement!==vd)vd.value=r.video||'';
+  vo.className=(r.video||'').startsWith('http')?'':'off';vo.href=r.video||'#';
   // items
   ['dojo','str','mob'].forEach(g=>document.getElementById('g-'+g).innerHTML='');
   ITEMS.forEach(it=>{
@@ -334,7 +376,7 @@ function renderDay(){
       const row=document.createElement('div');row.className='gymrow';
       const chips=document.createElement('div');chips.className='chips';
       PLACES.forEach(p=>{const c=document.createElement('button');c.textContent=p;c.className='chip'+(ps.includes(p)?' on':'');c.setAttribute('aria-pressed',ps.includes(p));
-        c.onclick=()=>{const next=ps.includes(p)?ps.filter(x=>x!==p):[...ps,p];data[key]={...rec(key),gymPlaces:next,gymTimes:times,gym:next.length>0};save();renderDay();renderMonth()};chips.appendChild(c)});
+        c.onclick=()=>{const next=ps.includes(p)?ps.filter(x=>x!==p):[...ps,p];data[key]={...rec(key),gymPlaces:next,gymTimes:times,gym:next.length>0,u:Date.now()};save();renderDay();renderMonth();cloudPush([key])};chips.appendChild(c)});
       const seg=document.createElement('div');seg.className='seg';
       [1,2].forEach(k=>{const b=document.createElement('button');b.textContent=k+'회';b.className=times===k?'on':'';b.disabled=!ps.length;b.onclick=()=>set('gymTimes',k);seg.appendChild(b)});
       row.appendChild(chips);row.appendChild(seg);el.appendChild(row);
@@ -353,6 +395,8 @@ function renderDay(){
   });
 }
 
+document.getElementById('skill').onchange=e=>set('note',e.target.value.trim());
+document.getElementById('video').onchange=e=>set('video',e.target.value.trim());
 /* ---------- month ---------- */
 function monthRecs(y,m){const days=new Date(y,m+1,0).getDate(),a=[];for(let d=1;d<=days;d++){const k=`${y}-${pad(m+1)}-${pad(d)}`;a.push({d,key:k,r:rec(k)})}return a}
 function renderMonth(){
@@ -368,7 +412,7 @@ function renderMonth(){
   const g=document.getElementById('calGrid');g.innerHTML='';
   for(let i=0;i<first;i++){const e=document.createElement('div');e.className='d empty';g.appendChild(e)}
   recs.forEach(x=>{const n=doneCount(x.r);const b=document.createElement('button');
-    b.className='d '+level(n)+(n===0&&x.r.rest?' rest':'')+(x.key===dk(cur)?' sel':'')+(x.key>tKey?' future':'');
+    b.className='d '+level(n)+(n===0&&x.r.rest?' rest':'')+((x.r.note||x.r.video)?' hasnote':'')+(x.key===dk(cur)?' sel':'')+(x.key>tKey?' future':'');
     b.textContent=x.d;b.setAttribute('aria-label',`${m+1}월 ${x.d}일, ${n}개 완료`);
     if(x.key<=tKey)b.onclick=()=>{cur=new Date(y,m,x.d);renderDay();renderMonth();window.scrollTo({top:0,behavior:'smooth'})};g.appendChild(b)});
   // per-item streak/rate
@@ -407,7 +451,44 @@ document.getElementById('prevM').onclick=()=>{mon=new Date(mon.getFullYear(),mon
 document.getElementById('nextM').onclick=()=>{mon=new Date(mon.getFullYear(),mon.getMonth()+1,1);renderMonth()};
 document.getElementById('theme').onclick=function(){const h=document.documentElement;const light=h.dataset.theme==='light';if(light)delete h.dataset.theme;else h.dataset.theme='light';this.textContent=light?'밝은 화면으로':'어두운 화면으로';try{localStorage.setItem(TKEY,light?'dark':'light')}catch(e){}};
 if(document.documentElement.dataset.theme==='light')document.getElementById('theme').textContent='어두운 화면으로';
-document.getElementById('reset').onclick=()=>{if(confirm('모든 운동 기록을 지울까요? 되돌릴 수 없어요.')){data={};save();renderDay();renderMonth()}};
+document.getElementById('reset').onclick=()=>{if(confirm('이 기기의 기록만 지웁니다. 클라우드 기록은 남아요. 지울까요?')){data={};save();renderDay();renderMonth()}};
+
+/* ---------- cloud sync (Google Apps Script + Sheet) ---------- */
+const CKEY='workout-cloud';
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbyPjFmpmh7CP-ObjrZ3FJrpfWYljtQZoaufWq6SL96quXORq5g_zlcneWddW8ADtr5F/exec';
+let cloud={url:CLOUD_URL,key:''};try{cloud={...cloud,...(JSON.parse(localStorage.getItem(CKEY)||'{}')||{})}}catch(e){}
+if(!cloud.url)cloud.url=CLOUD_URL;
+let pending=new Set(),ptimer=null,busy=false;
+function cstat(cls,txt){document.getElementById('cdot').className=cls;document.getElementById('ctext').textContent=txt}
+function mergeIn(remote){let changed=false;for(const d in remote){const r=remote[d],l=data[d];if(!l||(Number(r.u||0)>Number(l.u||0))){data[d]=r;changed=true}}if(changed){save();renderDay();renderMonth()}}
+async function cloudPull(){
+  if(!cloud.url)return;cstat('busy','동기화 중…');
+  try{const res=await fetch(cloud.url+'?key='+encodeURIComponent(cloud.key),{method:'GET'});const j=await res.json();
+    if(j.error){cstat('bad',j.error==='key'?'비밀번호가 달라요':'연결 오류');return}
+    mergeIn(j.data||{});
+    // 클라우드에 없는 로컬 기록은 올려둔다
+    const missing=Object.keys(data).filter(d=>!(j.data||{})[d]||Number(data[d].u||0)>Number((j.data[d]||{}).u||0));
+    if(missing.length)cloudPush(missing);else cstat('ok','클라우드 동기화됨');
+  }catch(e){cstat('bad','오프라인 · 연결되면 다시 저장')}
+}
+function cloudPush(keys){if(!cloud.url)return;keys.forEach(k=>pending.add(k));clearTimeout(ptimer);ptimer=setTimeout(flush,1500)}
+async function flush(){
+  if(busy||!cloud.url||!pending.size)return;busy=true;const keys=[...pending];pending.clear();cstat('busy','저장 중…');
+  const records={};keys.forEach(k=>{if(data[k])records[k]={...data[k],u:data[k].u||Date.now()}});
+  try{const res=await fetch(cloud.url,{method:'POST',body:JSON.stringify({key:cloud.key,records})});const j=await res.json();
+    if(j.error){cstat('bad',j.error==='key'?'비밀번호가 달라요':'연결 오류');keys.forEach(k=>pending.add(k))}
+    else{mergeIn(j.data||{});cstat('ok','클라우드 동기화됨')}
+  }catch(e){cstat('bad','오프라인 · 연결되면 다시 저장');keys.forEach(k=>pending.add(k))}
+  busy=false;if(pending.size)ptimer=setTimeout(flush,4000);
+}
+document.getElementById('cedit').onclick=()=>{const f=document.getElementById('cform');f.classList.toggle('open');document.getElementById('curl').value=cloud.url||'';document.getElementById('ckey').value=cloud.key||''};
+document.getElementById('csave').onclick=()=>{cloud={url:document.getElementById('curl').value.trim(),key:document.getElementById('ckey').value.trim()};
+  if(!cloud.url.startsWith('https://script.google.com/')){alert('script.google.com 으로 시작하는 웹 앱 URL을 넣어주세요');return}
+  try{localStorage.setItem(CKEY,JSON.stringify(cloud))}catch(e){}document.getElementById('cform').classList.remove('open');cloudPull()};
+document.getElementById('coff').onclick=()=>{cloud={url:CLOUD_URL,key:''};try{localStorage.removeItem(CKEY)}catch(e){}document.getElementById('cform').classList.remove('open');cstat('','클라우드 미연결')};
+window.addEventListener('online',()=>{if(pending.size)flush();else cloudPull()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')cloudPull()});
+if(cloud.url&&cloud.key)cloudPull();else{cstat('','비밀번호를 넣으면 클라우드 연결');document.getElementById('cform').classList.add('open');document.getElementById('curl').value=cloud.url}
 renderDay();renderMonth();
 </script>
 </body>
