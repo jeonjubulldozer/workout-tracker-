@@ -163,6 +163,23 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 .chart .gl{stroke:var(--line);stroke-width:1}
 .chart text{fill:var(--mute);font-size:9px;font-family:inherit}
 .share{width:100%;padding:15px;border-radius:16px;background:var(--ink);color:var(--bg);font-weight:700;font-size:15px;margin-top:4px}
+.wk{background:var(--panel);border-radius:24px;box-shadow:var(--shadow);padding:18px;margin-bottom:12px}
+.wk .hd{display:flex;justify-content:space-between;align-items:baseline}
+.wk .hd b{font-size:36px;font-weight:800;letter-spacing:-.04em}
+.wk .hd b small{font-size:16px;color:var(--mute);font-weight:600;margin-left:2px}
+.wk .hd span{font-size:12px;color:var(--mute)}
+.wk .pb{height:10px;border-radius:5px;background:var(--track);overflow:hidden;margin:10px 0 8px}
+.wk .pb i{display:block;height:100%;background:linear-gradient(90deg,var(--hot),var(--hot2));transition:width .5s}
+.wk .pb i.hit{background:var(--cool)}
+.wk .msg{font-size:13px;color:var(--mute)}
+.wk .msg b{color:var(--ink)}
+.wk .hist{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:14px;align-items:end;height:64px}
+.wk .hist div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%}
+.wk .hist i{display:block;width:100%;border-radius:4px 4px 2px 2px;background:var(--panel2);min-height:3px}
+.wk .hist i.on{background:var(--hot)} .wk .hist i.hit{background:var(--cool)} .wk .hist i.now{outline:2px solid var(--ink);outline-offset:-2px}
+.wk .hist span{font-size:9px;color:var(--mute);margin-top:4px}
+.wk .avg{display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--mute)}
+.wk .avg b{color:var(--ink);font-weight:800;font-size:14px}
 .note{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .note label{font-size:12px;color:var(--mute);font-weight:600}
 .note textarea,.note input{font:inherit;font-size:15px;line-height:1.5;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);width:100%;resize:vertical}
@@ -237,6 +254,13 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
     <div class="week" id="week"></div>
   </section>
 
+  <section class="wk">
+    <div class="hd"><b><span id="wkN">0</span><small>/ 10회</small></b><span id="wkRange"></span></div>
+    <div class="pb"><i id="wkBar"></i></div>
+    <div class="msg" id="wkMsg"></div>
+    <div class="hist" id="wkHist"></div>
+    <div class="avg"><span>최근 4주 평균 <b id="wkAvg4">0</b>회</span><span>이달 주평균 <b id="wkAvgM">0</b>회</span></div>
+  </section>
   <div class="rest"><div>쉬는 날<span>회복도 훈련이에요. 연속 기록이 끊기지 않아요.</span></div><button class="toggle" id="restToggle" role="switch" aria-label="쉬는 날"></button></div>
 
   <h2>도장</h2><div class="group" id="g-dojo"></div>
@@ -286,13 +310,14 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 <script>
 const ITEMS=[
   {k:'gym',   g:'dojo', n:'체육관',            s:'어디에 몇 회 갔나요?', t:'gym'},
+  {k:'hajun', g:'dojo', n:'하준과 스파링',      s:'했나요?', t:'bool'},
   {k:'bbs',   g:'str',  n:'불가리안 백 스윙',  s:'개수', t:'num', step:10},
   {k:'bbrow', g:'str',  n:'불가리안 백 로우',  s:'개수', t:'num', step:10},
   {k:'bblunge',g:'str', n:'불가리안 백 런지',  s:'개수', t:'num', step:10},
   {k:'kbs',   g:'str',  n:'케틀벨 스윙',       s:'개수', t:'num', step:10},
   {k:'squat', g:'str',  n:'스쿼트',            s:'개수', t:'num', step:10},
   {k:'pull',  g:'str',  n:'턱걸이',            s:'개수', t:'num', step:1},
-  {k:'thor',  g:'mob',  n:'흉추 회전 스트레칭', s:'했나요?', t:'bool'},
+  {k:'thor',  g:'mob',  n:'흉추 회전 스트레칭', s:'회수', t:'num', step:5},
   {k:'bridge',g:'mob',  n:'브릿지',            s:'개수', t:'num', step:5},
   {k:'crawl', g:'mob',  n:'배밀기',            s:'개수', t:'num', step:5},
 ];
@@ -350,7 +375,7 @@ const gymTimes=r=>gymPlaces(r).length?(r.gymTimes||1):0;
 const itemVal=(it,r)=>it.t==='gym'?gymTimes(r):it.t==='bool'?(r[it.k]?1:0):(r[it.k]||0);
 const doneCount=r=>ITEMS.filter(i=>itemVal(i,r)>0).length;
 const level=n=>n===0?'':n<3?'l1':n<ITEMS.length?'l2':'l3';
-function streakOf(pred){let s=0;const d=today();for(let i=0;i<1000;i++){const r=rec(dk(d));if(pred(r))s++;else if(!r.rest)break;d.setDate(d.getDate()-1)}return s}
+function streakOf(pred){let s=0;const d=today();const t=rec(dk(d));if(!pred(t)&&!t.rest)d.setDate(d.getDate()-1);for(let i=0;i<1000;i++){const r=rec(dk(d));if(pred(r))s++;else if(!r.rest)break;d.setDate(d.getDate()-1)}return s}
 function set(k,v){const key=dk(cur);data[key]={...rec(key),[k]:v,u:Date.now()};save();renderDay();renderMonth();cloudPush([key])}
 function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),1800)}
 
@@ -457,12 +482,30 @@ function renderDay(){
 
 document.getElementById('skill').onchange=e=>set('note',e.target.value.trim());
 document.getElementById('video').onchange=e=>set('video',e.target.value.trim());
+/* ---------- weekly gym ---------- */
+const GOAL=10;
+function weekStart(d){const w=new Date(d);w.setHours(0,0,0,0);w.setDate(w.getDate()-((w.getDay()+6)%7));return w}
+function weekCount(ws){let n=0;for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);n+=gymTimes(rec(dk(d)))}return n}
+function renderWeekly(){
+  const t=today(),ws=weekStart(t),we=new Date(ws);we.setDate(ws.getDate()+6);
+  const n=weekCount(ws),left=6-((t.getDay()+6)%7);
+  document.getElementById('wkN').textContent=n;
+  document.getElementById('wkRange').textContent=`이번 주 · ${ws.getMonth()+1}/${ws.getDate()}–${we.getMonth()+1}/${we.getDate()}`;
+  const bar=document.getElementById('wkBar');bar.style.width=Math.min(100,n/GOAL*100)+'%';bar.className=n>=GOAL?'hit':'';
+  document.getElementById('wkMsg').innerHTML=n>=GOAL?`목표 달성 🔥 <b>${n}회</b>`:`목표까지 <b>${GOAL-n}회</b> · 남은 날 <b>${left+1}일</b>${left+1>0?` · 하루 ${Math.ceil((GOAL-n)/(left+1))}회 페이스`:''}`;
+  const hist=document.getElementById('wkHist');hist.innerHTML='';const counts=[];
+  for(let i=7;i>=0;i--){const s=new Date(ws);s.setDate(ws.getDate()-i*7);const c=weekCount(s);counts.push(c);
+    hist.innerHTML+=`<div><i class="${c?'on':''}${c>=GOAL?' hit':''}${i===0?' now':''}" style="height:${Math.max(4,c/Math.max(GOAL,...counts,1)*100)}%"></i><span>${s.getMonth()+1}/${s.getDate()}</span></div>`}
+  const prev4=counts.slice(3,7);document.getElementById('wkAvg4').textContent=(prev4.reduce((a,b)=>a+b,0)/4).toFixed(1);
+  const first=new Date(t.getFullYear(),t.getMonth(),1),mdays=t.getDate();let mt=0;for(let d=1;d<=mdays;d++)mt+=gymTimes(rec(`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(d)}`));
+  document.getElementById('wkAvgM').textContent=(mt/(mdays/7)).toFixed(1);
+}
 /* ---------- month ---------- */
 function monthRecs(y,m){const days=new Date(y,m+1,0).getDate(),a=[];for(let d=1;d<=days;d++){const k=`${y}-${pad(m+1)}-${pad(d)}`;a.push({d,key:k,r:rec(k)})}return a}
 function renderMonth(){
   const y=mon.getFullYear(),m=mon.getMonth(),first=new Date(y,m,1).getDay(),t=today(),tKey=dk(t);
   const recs=monthRecs(y,m),days=recs.length;
-  document.getElementById('monthTitle').textContent=`${y}년 ${m+1}월`;renderGallery(recs);
+  document.getElementById('monthTitle').textContent=`${y}년 ${m+1}월`;renderGallery(recs);renderWeekly();
   const isCurM=y===t.getFullYear()&&m===t.getMonth();
   document.getElementById('nextM').disabled=isCurM;
   const gym=recs.reduce((a,x)=>a+gymTimes(x.r),0),full=recs.filter(x=>doneCount(x.r)===ITEMS.length).length;
