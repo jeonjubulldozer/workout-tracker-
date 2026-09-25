@@ -120,7 +120,8 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 .mhead h3{font-size:22px;font-weight:800;letter-spacing:-.03em}
 .mhead .nav button{width:36px;height:36px;border-radius:10px;background:var(--panel);box-shadow:var(--shadow);font-size:16px}
 .mhead .nav button:disabled{opacity:.3}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px}
+.stats.places{grid-template-columns:repeat(3,1fr)}
 .stat{background:var(--panel);border-radius:16px;box-shadow:var(--shadow);padding:12px 12px 10px}
 .stat b{display:block;font-size:24px;font-weight:800;letter-spacing:-.04em;line-height:1.1}
 .stat span{font-size:11px;color:var(--mute);display:block;margin-top:4px}
@@ -540,8 +541,8 @@ function renderMonth(){
   const isCurM=y===t.getFullYear()&&m===t.getMonth();
   document.getElementById('nextM').disabled=isCurM;
   const gym=recs.reduce((a,x)=>a+gymTimes(x.r),0),full=recs.filter(x=>x.key<=tKey&&achieved(x.r)).length;
-  let best=0,run=0;recs.forEach(x=>{if(x.key>tKey)return;if(achieved(x.r)){run++;best=Math.max(best,run)}else if(!x.r.rest)run=0});
-  document.getElementById('stats').innerHTML=`<div class="stat"><b>${gym}</b><span>도장 출석 (회)</span></div><div class="stat"><b>${full}</b><span>달성한 날</span></div><div class="stat"><b>${best}</b><span>이달 최장 연속</span></div>`;
+  let best=0,run=0,bestG=0,runG=0;recs.forEach(x=>{if(x.key>tKey)return;if(achieved(x.r)){run++;best=Math.max(best,run)}else if(!x.r.rest)run=0;if(dojo(x.r)){runG++;bestG=Math.max(bestG,runG)}else if(!x.r.rest)runG=0});
+  document.getElementById('stats').innerHTML=`<div class="stat"><b>${gym}</b><span>도장 출석 (회)</span></div><div class="stat"><b>${full}</b><span>달성한 날</span></div><div class="stat"><b>${best}</b><span>달성 최장 연속</span></div><div class="stat"><b>${bestG}</b><span>도장 최장 연속</span></div>`;
   document.getElementById('places').innerHTML=PLACES.map(p=>`<div class="stat"><b>${recs.filter(x=>gymPlaces(x.r).includes(p)).length}</b><span>${p} 간 날</span></div>`).join('');
   const g=document.getElementById('calGrid');g.innerHTML='';
   for(let i=0;i<first;i++){const e=document.createElement('div');e.className='d empty';g.appendChild(e)}
