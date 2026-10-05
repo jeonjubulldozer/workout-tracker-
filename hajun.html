@@ -10,7 +10,16 @@
 <title>하준이의 미션</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23FFC23C'/%3E%3Cpath d='M50 14l10 23 25 3-19 17 6 25-22-13-22 13 6-25-19-17 25-3z' fill='%23fff' stroke='%23E8590C' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23FFC23C'/%3E%3Cpath d='M50 14l10 23 25 3-19 17 6 25-22-13-22 13 6-25-19-17 25-3z' fill='%23fff' stroke='%23E8590C' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
-<link rel="manifest" href='data:application/manifest+json,{"name":"하준이의 미션","short_name":"하준 미션","start_url":".","display":"standalone","background_color":"%23FFF5DC","theme_color":"%23FFF5DC","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2724%27 fill=%27%23FFC23C%27/%3E%3Cpath d=%27M50 14l10 23 25 3-19 17 6 25-22-13-22 13 6-25-19-17 25-3z%27 fill=%27%23fff%27 stroke=%27%23E8590C%27 stroke-width=%274%27/%3E%3C/svg%3E","sizes":"any","type":"image/svg+xml"}]}'>
+<link rel="manifest" id="mf">
+<script>
+// 홈 화면 앱 정보: 시작 주소를 hajun.html 로 고정하고, 아빠 앱과 다른 앱(id)으로 설치되게 함
+(function(){try{
+  var base=location.href.split('#')[0].split('?')[0];
+  var m={id:'/hajun-mission',name:'하준이의 미션',short_name:'하준 미션',start_url:base,scope:base,display:'standalone',background_color:'#FFF5DC',theme_color:'#FFF5DC',
+    icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%23FFC23C'/%3E%3Cpath d='M50 14l10 23 25 3-19 17 6 25-22-13-22 13 6-25-19-17 25-3z' fill='%23fff' stroke='%23E8590C' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E",sizes:'any',type:'image/svg+xml',purpose:'any'}]};
+  document.getElementById('mf').href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(m));
+}catch(e){}})();
+</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
 <style>
 :root{
