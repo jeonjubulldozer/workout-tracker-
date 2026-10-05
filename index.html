@@ -605,7 +605,7 @@ let cloud={url:CLOUD_URL,key:''};try{cloud={...cloud,...(JSON.parse(localStorage
 if(!cloud.url)cloud.url=CLOUD_URL;
 let pending=new Set(),ptimer=null,busy=false;
 function cstat(cls,txt){document.getElementById('cdot').className=cls;document.getElementById('ctext').textContent=txt}
-function mergeIn(remote){let changed=false;for(const d in remote){const r=remote[d],l=data[d];if(!l||(Number(r.u||0)>Number(l.u||0))){data[d]=r;changed=true}}if(changed){save();renderDay();renderMonth()}}
+function mergeIn(remote){let changed=false;for(const d in remote){if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;const r=remote[d],l=data[d];if(!l||(Number(r.u||0)>Number(l.u||0))){data[d]=r;changed=true}}if(changed){save();renderDay();renderMonth()}}
 async function cloudPull(){
   if(!cloud.url)return;cstat('busy','동기화 중…');
   try{const res=await fetch(cloud.url+'?key='+encodeURIComponent(cloud.key),{method:'GET'});const j=await res.json();

@@ -116,6 +116,15 @@ h2{font-size:21px;margin:24px 4px 10px}
 .team .tb i{display:block;height:100%}
 .team .big{font-size:30px}
 .team .msg{font-size:14px;color:var(--mute)}
+.cloud{padding:12px 16px}
+.cloud .st{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px}
+.cloud .st i{width:9px;height:9px;border-radius:50%;background:var(--mute);display:inline-block;margin-right:7px}
+.cloud .st i.ok{background:var(--mint)} .cloud .st i.bad{background:var(--coral)} .cloud .st i.busy{background:var(--sun)}
+.cloud .st button{font-size:13px;color:var(--mute);text-decoration:underline}
+.cform{display:none;gap:8px;margin-top:10px}
+.cform.open{display:flex}
+.cform input{flex:1;min-width:0;font:inherit;font-size:14px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--panel2);color:var(--ink)}
+.cform button{padding:10px 12px;border-radius:12px;background:var(--ink);color:var(--bg);font-size:14px;flex:none}
 /* bubble */
 .bubble{background:var(--panel);border-radius:22px;padding:14px 16px;margin-bottom:14px;box-shadow:var(--pop);display:flex;gap:12px;align-items:center}
 .bubble .face{font-size:38px;flex:none}
@@ -307,7 +316,9 @@ h2{font-size:21px;margin:24px 4px 10px}
   <section class="card"><h3>📊 이달 미션 성적표</h3><div id="mrows"></div></section>
   <section class="card gal"><h3>📸 이달 인증샷</h3><div class="grid" id="galGrid"></div><div class="empty" id="galEmpty">도장이나 운동 사진을 올리면 여기 모여요!</div></section>
 
-  <p class="foot">기록은 이 기기에 저장돼요.<br><button id="bexport">백업 내보내기</button><button id="bimport">백업 가져오기</button><button id="reset">전체 지우기</button></p>
+  <section class="card cloud"><div class="st"><b><i id="cdot"></i><span id="ctext">클라우드 확인 중…</span></b><button id="cedit">설정</button></div>
+    <div class="cform" id="cform"><input id="ckey" placeholder="비밀번호 (아빠 운동 앱과 같은 것)" autocomplete="off"><button id="csave">연결하고 동기화</button></div></section>
+  <p class="foot">기록은 이 기기와 구글 클라우드에 저장돼요. 사진은 이 기기에만 있어요.<br><button id="bexport">백업 내보내기</button><button id="bimport">백업 가져오기</button><button id="reset">전체 지우기</button></p>
 </div>
 <div class="toast" id="toast"></div>
 <input type="file" id="pfile" accept="image/*" multiple style="display:none">
@@ -378,7 +389,7 @@ const CHEERS=['어른 사자도 사냥은 대부분 실패한대. 실패는 사�
 /* ===== 저장 ===== */
 const KEY='hajun-log-v1';
 let data={};try{data=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){data={}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
+function save(keys){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}cloudPush(keys||[dk(cur)])}
 const pad=n=>String(n).padStart(2,'0');
 const dk=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
@@ -427,7 +438,7 @@ async function openViewer(id,date,label){
   const u=await purl(id);if(!u){toast('이 기기에 없는 사진이에요');return}
   const v=document.getElementById('viewer');v.classList.add('open');document.getElementById('vimg').src=u;
   document.getElementById('vtitle').textContent=`${+date.slice(5,7)}/${+date.slice(8)} · ${label}`;
-  document.getElementById('vdel').onclick=async()=>{if(!confirm('이 사진을 지울까요?'))return;await pdel(id);delete urlCache[id];const r=rec(date),ph={...(r.photos||{})};ph[label]=(ph[label]||[]).filter(x=>x!==id);data[date]={...r,photos:ph,u:Date.now()};save();v.classList.remove('open');render()};
+  document.getElementById('vdel').onclick=async()=>{if(!confirm('이 사진을 지울까요?'))return;await pdel(id);delete urlCache[id];const r=rec(date),ph={...(r.photos||{})};ph[label]=(ph[label]||[]).filter(x=>x!==id);data[date]={...r,photos:ph,u:Date.now()};save();v.classList.remove('open');render();cloudPush([date])};
 }
 document.getElementById('vclose').onclick=()=>document.getElementById('viewer').classList.remove('open');
 async function photoRows(el,r,labels){
@@ -693,9 +704,38 @@ document.getElementById('bexport').onclick=async()=>{
   const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;a.click();
 };
 document.getElementById('bimport').onclick=()=>document.getElementById('bfile').click();
-document.getElementById('bfile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result),d=j.data||j;let n=0;for(const k in d){if(!isDate(k))continue;if(!data[k]||Number(d[k].u||0)>=Number(data[k].u||0)){data[k]=d[k];n++}}save();render();toast(`${n}일치 기록을 가져왔어요`)}catch(err){alert('백업 파일이 아니에요')}};rd.readAsText(f)};
+document.getElementById('bfile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const j=JSON.parse(rd.result),d=j.data||j;let n=0;for(const k in d){if(!isDate(k))continue;if(!data[k]||Number(d[k].u||0)>=Number(data[k].u||0)){data[k]=d[k];n++}}save(Object.keys(d).filter(isDate));render();toast(`${n}일치 기록을 가져왔어요`)}catch(err){alert('백업 파일이 아니에요')}};rd.readAsText(f)};
 document.getElementById('reset').onclick=()=>{if(prompt('정말 전부 지우려면 "삭제"라고 입력하세요')==='삭제'){data={};save();indexedDB.deleteDatabase('hajun-photos');render()}};
 
+/* ===== 클라우드 (아빠 운동 앱과 같은 구글 스크립트 사용, 하준 기록은 h: 로 구분) ===== */
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbyPjFmpmh7CP-ObjrZ3FJrpfWYljtQZoaufWq6SL96quXORq5g_zlcneWddW8ADtr5F/exec';
+let ckey='';try{const own=JSON.parse(localStorage.getItem('hajun-cloud')||'null'),dad=JSON.parse(localStorage.getItem('workout-cloud')||'null');ckey=(own&&own.key)||(dad&&dad.key)||''}catch(e){}
+let pending=new Set(),ptimer=null,busy=false,cloudReady=false;
+function cstat(c,t){const d=document.getElementById('cdot'),s=document.getElementById('ctext');if(d){d.className=c;s.textContent=t}}
+function mergeIn(remote){let ch=false;for(const rk in remote){if(rk.indexOf('h:')!==0)continue;const d=rk.slice(2);if(!isDate(d))continue;const r=remote[rk],l=data[d];if(!l||Number(r.u||0)>Number(l.u||0)){data[d]=r;ch=true}}
+  if(ch){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}render()}}
+async function cloudPull(){
+  if(!ckey)return;cstat('busy','동기화 중…');
+  try{const j=await (await fetch(CLOUD_URL+'?key='+encodeURIComponent(ckey))).json();
+    if(j.error){cstat('bad',j.error==='key'?'비밀번호가 달라요':'연결 오류');return}
+    cloudReady=true;const rem=j.data||{};mergeIn(rem);
+    const miss=Object.keys(data).filter(d=>isDate(d)&&(!rem['h:'+d]||Number(data[d].u||0)>Number(rem['h:'+d].u||0)));
+    if(miss.length)cloudPush(miss);else cstat('ok','클라우드 동기화됨');
+  }catch(e){cstat('bad','오프라인 · 연결되면 다시 저장')}
+}
+function cloudPush(keys){if(!ckey)return;(keys||[]).forEach(k=>{if(isDate(k))pending.add(k)});clearTimeout(ptimer);ptimer=setTimeout(flush,1500)}
+async function flush(){
+  if(busy||!ckey||!pending.size)return;busy=true;const keys=[...pending];pending.clear();cstat('busy','저장 중…');
+  const records={};keys.forEach(k=>{if(data[k])records['h:'+k]={...data[k],u:data[k].u||Date.now()}});
+  try{const j=await (await fetch(CLOUD_URL,{method:'POST',body:JSON.stringify({key:ckey,records})})).json();
+    if(j.error){cstat('bad',j.error==='key'?'비밀번호가 달라요':'연결 오류');keys.forEach(k=>pending.add(k))}else{mergeIn(j.data||{});cstat('ok','클라우드 동기화됨')}
+  }catch(e){cstat('bad','오프라인 · 연결되면 다시 저장');keys.forEach(k=>pending.add(k))}
+  busy=false;if(pending.size)ptimer=setTimeout(flush,4000);
+}
+document.getElementById('cedit').onclick=()=>{document.getElementById('cform').classList.toggle('open');document.getElementById('ckey').value=ckey};
+document.getElementById('csave').onclick=()=>{ckey=document.getElementById('ckey').value.trim();try{localStorage.setItem('hajun-cloud',JSON.stringify({key:ckey}))}catch(e){}document.getElementById('cform').classList.remove('open');cloudPull()};
+window.addEventListener('online',()=>{if(pending.size)flush();else cloudPull()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')cloudPull()});
 /* ===== 이동 ===== */
 function render(){renderDay();renderMonth()}
 function go(d){cur=new Date(d);cur.setHours(0,0,0,0);mon=new Date(cur.getFullYear(),cur.getMonth(),1);render()}
@@ -705,6 +745,7 @@ document.getElementById('td').onclick=()=>go(today());
 document.getElementById('pm').onclick=()=>{mon=new Date(mon.getFullYear(),mon.getMonth()-1,1);renderMonth()};
 document.getElementById('nm').onclick=()=>{mon=new Date(mon.getFullYear(),mon.getMonth()+1,1);renderMonth()};
 render();
+if(ckey)cloudPull();else{cstat('','비밀번호를 넣으면 클라우드 연결');document.getElementById('cform').classList.add('open')}
 </script>
 </body>
 </html>
