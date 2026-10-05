@@ -7,11 +7,20 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="오늘 운동">
+<meta name="apple-mobile-web-app-title" content="루틴의 힘">
 <title>오늘 운동</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230B0E14'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='%23FF5C1A' stroke-width='11' stroke-dasharray='140 50' stroke-linecap='round' transform='rotate(-90 50 50)'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230B0E14'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='%23FF5C1A' stroke-width='11' stroke-dasharray='140 50' stroke-linecap='round' transform='rotate(-90 50 50)'/%3E%3C/svg%3E">
-<link rel="manifest" href='data:application/manifest+json,{"name":"오늘 운동","short_name":"오늘 운동","start_url":".","display":"standalone","background_color":"%230B0E14","theme_color":"%230B0E14","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Crect width=%27100%27 height=%27100%27 rx=%2722%27 fill=%27%230B0E14%27/%3E%3Ccircle cx=%2750%27 cy=%2750%27 r=%2730%27 fill=%27none%27 stroke=%27%23FF5C1A%27 stroke-width=%2711%27 stroke-dasharray=%27140 50%27 stroke-linecap=%27round%27 transform=%27rotate(-90 50 50)%27/%3E%3C/svg%3E","sizes":"any","type":"image/svg+xml"}]}'>
+<link rel="manifest" id="mf">
+<script>
+// 홈 화면 앱 정보: 이 폴더를 시작 주소로, 하준이 앱과 다른 앱(id)으로 설치되게 함
+(function(){try{
+  var base=new URL('./',location.href).href;
+  var m={id:'/workout-tracker-',name:'루틴의 힘',short_name:'루틴의 힘',start_url:base,scope:base,display:'standalone',background_color:'#0B0E14',theme_color:'#0B0E14',
+    icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230B0E14'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='%23FF5C1A' stroke-width='11' stroke-dasharray='140 50' stroke-linecap='round' transform='rotate(-90 50 50)'/%3E%3C/svg%3E",sizes:'any',type:'image/svg+xml',purpose:'any'}]};
+  document.getElementById('mf').href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(m));
+}catch(e){}})();
+</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap">
 <style>
 :root{
