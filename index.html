@@ -190,6 +190,15 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 .wk .hist span{font-size:9px;color:var(--mute);margin-top:4px}
 .wk .avg{display:flex;justify-content:space-between;margin-top:10px;font-size:12px;color:var(--mute)}
 .wk .avg b{color:var(--ink);font-weight:800;font-size:14px}
+.team{background:var(--panel);border-radius:20px;box-shadow:var(--shadow);padding:16px;margin-top:22px}
+.team h3{font-size:16px;font-weight:700;margin-bottom:6px}
+.team .tm{padding:8px 0;border-bottom:1px solid var(--line)}
+.team .tm:last-child{border-bottom:0}
+.team .tt{font-size:13px;color:var(--mute);font-weight:600}
+.team .big{font-size:24px;font-weight:800;letter-spacing:-.03em;margin:2px 0}
+.team .tb{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--track);margin:6px 0}
+.team .tb i{display:block;height:100%}
+.team .msg{font-size:12px;color:var(--mute);line-height:1.5}
 .note{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .note label{font-size:12px;color:var(--mute);font-weight:600}
 .note textarea,.note input{font:inherit;font-size:15px;line-height:1.5;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);width:100%;resize:vertical}
@@ -284,6 +293,8 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
   <h2>스트랭스</h2><div class="group" id="g-str"></div>
   <h2>가동성 · 컨디션</h2><div class="group" id="g-mob"></div>
   <h2>복습 · 레슨비 회수</h2><div class="group" id="g-rev"></div>
+
+  <section class="team" id="team" style="display:none"><h3>🤝 하준이랑 한 팀 · 이번 주</h3><div id="teamBody"></div></section>
 
   <h2>기록 · 영상</h2>
   <section class="note">
@@ -522,6 +533,22 @@ function renderDay(){
 document.getElementById('skill').onchange=e=>set('note',e.target.value.trim());
 document.getElementById('video').onchange=e=>set('video',e.target.value.trim());
 document.getElementById('video2').onchange=e=>set('video2',e.target.value.trim());
+/* ---------- 하준이랑 한 팀 (같은 폰 저장소 + 클라우드) ---------- */
+let cloudHajun={};
+function hajunRecs(){let loc={};try{loc=JSON.parse(localStorage.getItem('hajun-log-v1')||'{}')||{}}catch(e){}
+  const out={...cloudHajun};for(const k in loc){if(!out[k]||Number(loc[k].u||0)>=Number(out[k].u||0))out[k]=loc[k]}return out}
+function renderTeam(){
+  const hj=hajunRecs(),box=document.getElementById('team');if(!box)return;if(!Object.keys(hj).length){box.style.display='none';return}
+  const t=today(),ws=weekStart(t);let hg=0,ag=0,hs=0,as=0,hrep=0,amin=0;
+  const DS=['bbs','bbrow','bblunge','squat','kbs','kbsn','pull','bench'];
+  for(let i=0;i<7;i++){const d=new Date(ws);d.setDate(ws.getDate()+i);const k=dk(d),r=rec(k),hr=hj[k]||{};
+    ag+=gymTimes(r);hg+=Array.isArray(hr.places)?hr.places.length:0;
+    if((r.mins||0)>0||DS.some(x=>(r[x]||0)>0))as++;amin+=r.mins||0;
+    if(['jp','spin','swsq','row','hang'].some(x=>(Number(hr[x])||0)>0))hs++;hrep+=['jp','spin','swsq','row'].reduce((s,x)=>s+(Number(hr[x])||0),0)}
+  box.style.display='';
+  const row=(title,unit,av,hv,detail)=>{const tot=av+hv;return `<div class="tm"><div class="tt">${title}</div><div class="big">우리 팀 ${tot}${unit}</div><div class="tb"><i style="width:${tot?av/tot*100:0}%;background:var(--hot)"></i><i style="width:${tot?hv/tot*100:0}%;background:var(--cool)"></i></div><div class="msg"><span style="color:var(--hot)">■</span> 아빠 ${av}${unit} + <span style="color:var(--cool)">■</span> 하준 ${hv}${unit}${detail?`<br>${detail}`:''}</div></div>`};
+  document.getElementById('teamBody').innerHTML=row('도장 출석','회',ag,hg,'')+row('스트랭스 한 날','일',as,hs,`아빠 ${amin}분 · 하준 불가리안 백 ${hrep.toLocaleString()}회`);
+}
 /* ---------- weekly gym ---------- */
 const GOAL=10;
 function weekStart(d){const w=new Date(d);w.setHours(0,0,0,0);w.setDate(w.getDate()-((w.getDay()+6)%7));return w}
@@ -547,7 +574,7 @@ function monthRecs(y,m){const days=new Date(y,m+1,0).getDate(),a=[];for(let d=1;
 function renderMonth(){
   const y=mon.getFullYear(),m=mon.getMonth(),first=new Date(y,m,1).getDay(),t=today(),tKey=dk(t);
   const recs=monthRecs(y,m),days=recs.length;
-  document.getElementById('monthTitle').textContent=`${y}년 ${m+1}월`;renderGallery(recs);renderWeekly();
+  document.getElementById('monthTitle').textContent=`${y}년 ${m+1}월`;renderGallery(recs);renderWeekly();renderTeam();
   const isCurM=y===t.getFullYear()&&m===t.getMonth();
   document.getElementById('nextM').disabled=isCurM;
   const gym=recs.reduce((a,x)=>a+gymTimes(x.r),0),full=recs.filter(x=>x.key<=tKey&&achieved(x.r)).length;
@@ -614,7 +641,7 @@ let cloud={url:CLOUD_URL,key:''};try{cloud={...cloud,...(JSON.parse(localStorage
 if(!cloud.url)cloud.url=CLOUD_URL;
 let pending=new Set(),ptimer=null,busy=false;
 function cstat(cls,txt){document.getElementById('cdot').className=cls;document.getElementById('ctext').textContent=txt}
-function mergeIn(remote){let changed=false;for(const d in remote){if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;const r=remote[d],l=data[d];if(!l||(Number(r.u||0)>Number(l.u||0))){data[d]=r;changed=true}}if(changed){save();renderDay();renderMonth()}}
+function mergeIn(remote){let changed=false;const ch={};for(const k in remote)if(k.indexOf('h:')===0)ch[k.slice(2)]=remote[k];cloudHajun=ch;renderTeam();for(const d in remote){if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;const r=remote[d],l=data[d];if(!l||(Number(r.u||0)>Number(l.u||0))){data[d]=r;changed=true}}if(changed){save();renderDay();renderMonth()}}
 async function cloudPull(){
   if(!cloud.url)return;cstat('busy','동기화 중…');
   try{const res=await fetch(cloud.url+'?key='+encodeURIComponent(cloud.key),{method:'GET'});const j=await res.json();
