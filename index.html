@@ -219,6 +219,13 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 .lsec li.star{font-weight:700}
 .lsec li.star::before{background:var(--hot)}
 .lsec .fx{display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;color:var(--danger);background:rgba(255,77,109,.12);border-radius:6px;padding:1px 7px}
+.lsec .ak{display:inline-block;margin-top:3px;font-size:11.5px;font-weight:600;color:var(--hot2);background:rgba(255,176,46,.14);border-radius:6px;padding:1px 7px}
+.lsec li.ask{color:var(--mute)}
+.asks{background:var(--panel2);border-radius:14px;padding:12px 14px}
+.asks b{display:block;font-size:12px;color:var(--hot2);font-weight:800;margin-bottom:6px}
+.asks div{font-size:13.5px;line-height:1.5;padding:4px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}
+.asks div:first-of-type{border-top:0}
+.asks small{color:var(--mute);white-space:nowrap;font-size:11.5px}
 .lnotes{background:var(--panel);border-radius:20px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:12px}
 .habits{background:var(--panel2);border-radius:14px;padding:12px 14px}
 .habits b{display:block;font-size:12px;color:var(--danger);font-weight:800;margin-bottom:6px}
@@ -363,6 +370,7 @@ h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute
 
   <h2>레슨 노트</h2>
   <section class="lnotes">
+    <div class="asks" id="asks" style="display:none"></div>
     <div class="habits" id="habits" style="display:none"></div>
     <div class="lfilter" id="lfilter"></div>
     <div class="llist" id="llist"></div>
@@ -576,7 +584,7 @@ function lessonLabel(L){const d=new Date(L.date+'T00:00:00');return `${d.getMont
 function lessonBody(L,box){
   if(L.key)box.appendChild(el('div','lkey',L.key));
   (L.sections||[]).forEach(s=>{const sec=el('div','lsec');sec.appendChild(el('h4','',s.h));const ul=el('ul');
-    (s.items||[]).forEach(it=>{const li=el('li',it.star?'star':'',it.t);if(it.fix){li.appendChild(document.createElement('br'));li.appendChild(el('span','fx','고칠 습관 · '+it.fix))}ul.appendChild(li)});
+    (s.items||[]).forEach(it=>{const li=el('li',it.star?'star':it.ask?'ask':'',it.t);if(it.fix){li.appendChild(document.createElement('br'));li.appendChild(el('span','fx','고칠 습관 · '+it.fix))}if(it.ask){li.appendChild(document.createElement('br'));li.appendChild(el('span','ak','기억 안 남 · 다음 레슨 때 확인'))}ul.appendChild(li)});
     sec.appendChild(ul);box.appendChild(sec)})}
 function renderLessonDay(key){
   const box=document.getElementById('lday');if(!box)return;box.innerHTML='';
@@ -590,6 +598,8 @@ function renderLessons(){
   const seen=new Map();sorted.forEach(L=>(L.sections||[]).forEach(s=>(s.items||[]).forEach(it=>{if(it.fix){const k=it.fix;if(!seen.has(k))seen.set(k,{fix:k,sport:L.sport,date:L.date,n:0});seen.get(k).n++}})));
   hb.innerHTML='';if(seen.size){hb.style.display='';hb.appendChild(el('b','','고칠 습관 · 운동 전에 한 번 보기'));
     [...seen.values()].slice(0,8).forEach(x=>{const r=el('div');r.appendChild(el('span','',x.fix));const d=new Date(x.date+'T00:00:00');r.appendChild(el('small','',`${x.sport} ${d.getMonth()+1}/${d.getDate()}${x.n>1?' · '+x.n+'번 지적':''}`));hb.appendChild(r)})}else hb.style.display='none';
+  const ab=document.getElementById('asks'),asks=[];sorted.forEach(L=>(L.sections||[]).forEach(s=>(s.items||[]).forEach(it=>{if(it.ask)asks.push({t:it.t,h:s.h,sport:L.sport,date:L.date})})));
+  ab.innerHTML='';if(asks.length){ab.style.display='';ab.appendChild(el('b','','다음 레슨 때 확인할 것'));asks.slice(0,8).forEach(x=>{const r=el('div');r.appendChild(el('span','',x.h+' · '+x.t));const d=new Date(x.date+'T00:00:00');r.appendChild(el('small','',`${x.sport} ${d.getMonth()+1}/${d.getDate()}`));ab.appendChild(r)})}else ab.style.display='none';
   const sports=['전체',...PLACES.filter(p=>sorted.some(L=>L.sport===p)),...[...new Set(sorted.map(L=>L.sport))].filter(p=>!PLACES.includes(p))];
   fl.innerHTML='';if(sports.length>2)sports.forEach(sp=>{const b=el('button',sp===lsport?'on':'',sp);b.onclick=()=>{lsport=sp;renderLessons()};fl.appendChild(b)});
   ll.innerHTML='';const list=sorted.filter(L=>lsport==='전체'||L.sport===lsport);
