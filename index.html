@@ -848,6 +848,8 @@ document.getElementById('coff').onclick=()=>{cloud={url:CLOUD_URL,key:''};try{lo
 window.addEventListener('online',()=>{if(pending.size)flush();else cloudPull()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')cloudPull()});
 rlWire(useKey);
+// 연결 링크(#k=비밀번호)로 열면 비밀번호를 칠 필요 없이 바로 연결 — 주소창에서는 바로 지움
+(function(){try{const m=location.hash.match(/[#&]k=([^&]+)/);if(!m)return;const k=decodeURIComponent(m[1]).trim();history.replaceState(null,'',location.pathname+location.search);if(!k||k===cloud.key)return;if(!cloud.key)relink=true;cloud={...cloud,url:cloud.url||CLOUD_URL,key:k};saveCloud();typedKey=k}catch(e){}})();
 if(cloud.url&&cloud.key)cloudPull();else{needKey();rlAuto(useKey,()=>!!cloud.key)}
 renderDay();renderMonth();lessonsLoad();
 </script>
